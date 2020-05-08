@@ -481,18 +481,21 @@ class Data implements StageInterface, RollbackInterface
         );
         $recordsToSave = $destinationDocument->getRecords();
         $customAttributeIds = $this->modelData->getCustomAttributeIds();
-        $customEntityAttributes = $this->source->getRecords(
-            $sourceDocName,
-            0,
-            $this->source->getRecordsCount($sourceDocName),
-            new \Zend_Db_Expr(sprintf('attribute_id IN (%s)', implode(',', $customAttributeIds)))
-        );
-        foreach ($customEntityAttributes as $record) {
-            $record['sort_order'] = $this->getCustomAttributeSortOrder($record);
-            $record['attribute_group_id'] = $this->mapAttributeGroupIdsSourceDest[$record['attribute_group_id']];
-            $record['entity_attribute_id'] = null;
-            $destinationRecord = $this->factory->create(['document' => $destinationDocument, 'data' => $record]);
-            $recordsToSave->addRecord($destinationRecord);
+        // On clearing data tables eav_entity_attribute, customAttributeIds are empty
+        if(!empty($customAttributeIds)){
+            $customEntityAttributes = $this->source->getRecords(
+                $sourceDocName,
+                0,
+                $this->source->getRecordsCount($sourceDocName),
+                new \Zend_Db_Expr(sprintf('attribute_id IN (%s)', implode(',', $customAttributeIds)))
+            );
+            foreach ($customEntityAttributes as $record) {
+                $record['sort_order'] = $this->getCustomAttributeSortOrder($record);
+                $record['attribute_group_id'] = $this->mapAttributeGroupIdsSourceDest[$record['attribute_group_id']];
+                $record['entity_attribute_id'] = null;
+                $destinationRecord = $this->factory->create(['document' => $destinationDocument, 'data' => $record]);
+                $recordsToSave->addRecord($destinationRecord);
+            }
         }
         $this->saveRecords($destinationDocument, $recordsToSave);
     }
