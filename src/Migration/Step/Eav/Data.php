@@ -490,11 +490,14 @@ class Data implements StageInterface, RollbackInterface
                 new \Zend_Db_Expr(sprintf('attribute_id IN (%s)', implode(',', $customAttributeIds)))
             );
             foreach ($customEntityAttributes as $record) {
-                $record['sort_order'] = $this->getCustomAttributeSortOrder($record);
-                $record['attribute_group_id'] = $this->mapAttributeGroupIdsSourceDest[$record['attribute_group_id']];
-                $record['entity_attribute_id'] = null;
-                $destinationRecord = $this->factory->create(['document' => $destinationDocument, 'data' => $record]);
-                $recordsToSave->addRecord($destinationRecord);
+                // Skip destination mappings that do not exist
+                if(in_array($record['attribute_group_id'], $this->mapAttributeGroupIdsSourceDest)){
+                    $record['attribute_group_id'] = $this->mapAttributeGroupIdsSourceDest[$record['attribute_group_id']];
+                    $record['sort_order'] = $this->getCustomAttributeSortOrder($record);
+                    $record['entity_attribute_id'] = null;
+                    $destinationRecord = $this->factory->create(['document' => $destinationDocument, 'data' => $record]);
+                    $recordsToSave->addRecord($destinationRecord);
+                }
             }
         }
         $this->saveRecords($destinationDocument, $recordsToSave);
